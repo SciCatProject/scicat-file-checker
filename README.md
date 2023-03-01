@@ -11,6 +11,9 @@ Credentials are stored in `.env` file, which including (ask someone who has the 
 - password_prod
 - ssc_base_url
 - psc_base_url
+- HOST
+- PORT
+- FILE_LIMIT
 
 If you want to run this application locally, you need to change or remove the volumne paths in the `docker-compose.yml`.
 
