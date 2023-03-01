@@ -4,7 +4,7 @@ name: Build && Push
 on:
   push:
     branches:
-      - main
+      - master
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -32,4 +32,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/junjiequan/file-checker-service:latest
+          tags: ghcr.io/scicatproject/file-checker-service:latest
