@@ -48,15 +48,9 @@ For now, you can only access to the other analyzed .csv files from the repositor
 
 # Base path setting to run the script
 
-There's two base path can be found:
+- `base_mount_point = "/usr/src/app/"` 
 
-- `base_mount_point = "/Users/junjiequan/Documents/GitHub/2953_swap/"` is used when you run the script directly on local or debug mode
-- `base_mount_point = "/usr/src/app/"` is used when you run the script on docker container
-
-depends on what environment you run the script you need to make adjustment for the `base_mount_point` path. <b>Otherwise the result of file_exists in the table will not be accurate.</b>
-</br>
-
-When everything is ready and the script is expected to run on the server `dfFiles['local_full_path']` should be changed to `dfFiles['file_full_path']` for the line of code below
+When everything is ready and the script is expected to run on the scicatfileserver `dfFiles['local_full_path']` should be changed to `dfFiles['file_full_path']` for the line of code below
 
 ```
 dfFiles['file_exists'] = dfFiles['local_full_path'].apply(
