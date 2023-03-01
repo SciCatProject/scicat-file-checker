@@ -1,5 +1,7 @@
 # File check service
 
+If you want to run this application locally, you need to change or remove the volumne paths in the `docker-compose.yml`.
+
 This repository is MVP version of file check service.</br>
 Credentials are stored in `.env` file, which including (ask someone who has the .env):
 
@@ -23,6 +25,7 @@ Credentials are stored in `.env` file, which including (ask someone who has the 
 # How to start, create and update image and containers
 
 - `sh docker-run.sh` command on terminal to start. If you make any changes, run this command again.
+  if this command gives error try change the scrip in the file to `docker-compose down` and `docker-compose up`
 
 # How to use
 
