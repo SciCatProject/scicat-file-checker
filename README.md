@@ -1,6 +1,7 @@
 # File check service
 
-If you want to run this application locally, you need to change or remove the volumne paths in the `docker-compose.yml`.
+This application serves as file download availability identifier for the scicat application.
+Currently, on both staging and prod scicat application, many zipped files are not available for downloading and we don't know what are the issues. This api service checks and provides CSV file that contains file information including download availability, so that later we can further investigate those files have download issues.
 
 This repository is MVP version of file check service.</br>
 Credentials are stored in `.env` file, which including (ask someone who has the .env):
@@ -10,6 +11,8 @@ Credentials are stored in `.env` file, which including (ask someone who has the 
 - password_prod
 - ssc_base_url
 - psc_base_url
+
+If you want to run this application locally, you need to change or remove the volumne paths in the `docker-compose.yml`.
 
 # How to install:
 
