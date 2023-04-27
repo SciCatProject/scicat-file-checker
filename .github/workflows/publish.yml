@@ -26,10 +26,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Create image tags
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/scicatproject/file-checker-service
+          flavor: latest=true # adds :latest tag to outputs.tags
+          tags: type=sha,format=long,prefix= # adds :<sha> tag to outputs.tags
+
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v3
         with:
           context: .
           push: true
-          tags: ghcr.io/scicatproject/file-checker-service:latest
+          tags: ${{ steps.meta.outputs.tags }}
