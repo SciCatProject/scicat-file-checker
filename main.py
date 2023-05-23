@@ -1,4 +1,6 @@
 import json
+import urllib.parse
+
 import requests
 from dotenv import load_dotenv
 
@@ -42,6 +44,7 @@ ssc_ldap_login_url = "/".join([ssc_base_url, "auth", "msad"])
 ssc_api_url = "/".join([ssc_base_url, "api", "v3"])
 ssc_functional_login_url = "/".join([ssc_api_url, "users", "login"])
 ssc_datasets_url = "/".join([ssc_api_url, "datasets"])
+ssc_datasets_count_url = "/".join([ssc_api_url, "datasets", "count"])
 ssc_origdatablocks_url = "/".join([ssc_api_url, "origdatablocks"])
 ssc_proposals_url = "/".join([ssc_api_url, "proposals"])
 ssc_published_data_url = "/".join([ssc_api_url, "publisheddata"])
@@ -52,10 +55,16 @@ psc_ldap_login_url = "/".join([psc_base_url, "auth", "msad"])
 psc_api_url = "/".join([psc_base_url, "api", "v3"])
 psc_functional_login_url = "/".join([psc_api_url, "users", "login"])
 psc_datasets_url = "/".join([psc_api_url, "datasets"])
+psc_datasets_count_url = "/".join([psc_api_url, "datasets", "count"])
 psc_origdatablocks_url = "/".join([psc_api_url, "origdatablocks"])
 psc_proposals_url = "/".join([psc_api_url, "proposals"])
 psc_published_data_url = "/".join([psc_api_url, "publisheddata"])
 psc_samples_url = "/".join([psc_api_url, "samples"])
+
+origdatablock_fields = ["id", "size", "datasetId", "file_size", "file_path"]
+dataset_fields = ["pid", "sourceFolder", "size", "numberOfFiles", "type"]
+
+items_per_call = 10000
 
 
 file_names = {}
@@ -73,7 +82,9 @@ def checkExist(f):
 
 @app.get("/", response_class=HTMLResponse)
 def read_root():
-    return "query <b>/start</b> to run the file checker script"
+    return """
+    query <b>/start</b> to run the file checker script
+    """
 
 
 @app.get("/start")
@@ -162,9 +173,9 @@ async def read_root():
         ].rename(columns={"id": "origdatablockId", "size": "origdatablock_size"})
         logger.info("Formatted datablocks information")
 
-        # response from staging dataset
-        s_d_response = requests.get(
-            ssc_datasets_url,
+        # retrieve the number of datasets from staging
+        s_d_c_response = requests.get(
+            ssc_datasets_count_url,
             params=dict({"access_token": sscClient._token}),
             headers=sscClient._headers,
             timeout=sscClient._timeout_seconds,
@@ -172,9 +183,47 @@ async def read_root():
         )
         logger.info("Loaded staging datasets information")
 
-        # response from production dataset
-        p_d_response = requests.get(
-            psc_datasets_url,
+        # handle Error for dataset
+        assert s_d_c_response.status_code == 200, "Staging dataset count error"
+#        assert p_d_response.status_code == 200, "Production dataset data response error"
+        s_datasets_count = s_d_c_response.json()["count"]
+
+        # retrieve the datasets from staging
+        lD_1 = []
+        items_count = 0
+        # filter should look something like this
+        # filter=%7B%22limits%22%3A%20%7B%22limit%22%3A%2010%2C%20%22skip%22%3A%200%2C%20%22order%22%3A%20%22asc%22%7D%7D
+        while (not lD_1 or items_count < s_datasets_count):
+            logger.info("Loading first batch of datasets from staging")
+            s_d_response = requests.get(
+                ssc_datasets_url,
+                params={
+                    "filter": json.dumps({
+                        "fields": dataset_fields,
+                        "limits":{
+                            "limit" : items_per_call,
+                            "skip" : items_count
+                        }
+                    })
+                },
+                headers=sscClient._headers,
+                timeout=sscClient._timeout_seconds,
+                stream=False,
+            )
+            assert s_d_response.status_code == 200, "Staging dataset retrieval error"
+            lD_1.append(pd.DataFrame(s_d_response.json()))
+            logger.info("Loaded {} datasets".format(len(lD_1[-1])))
+            items_count += len(lD_1[-1])
+
+        dfD_1 = pd.concat(lD_1,ignore_index=True)
+        dfD_1["environment"] = "staging"
+        logger.info("Loaded staging datasets information in data frame")
+        logger.info("Total number of staging datasets loaded: {}".format(len(dfD_1)))
+        del lD_1
+
+        # retrieve the number of datasets from production
+        p_d_c_response = requests.get(
+            psc_datasets_count_url,
             params=dict({"access_token": pscClient._token}),
             headers=pscClient._headers,
             timeout=pscClient._timeout_seconds,
@@ -183,24 +232,51 @@ async def read_root():
         logger.info("Loaded production datasets information")
 
         # handle Error for dataset
-        assert s_d_response.status_code == 200, "Staging dataset data response error"
-        assert p_d_response.status_code == 200, "Production dataset data response error"
+        assert p_d_c_response.status_code == 200, "Production dataset count error"
+        p_datasets_count = p_d_c_response.json()["count"]
 
-        dfD_1 = pd.DataFrame(s_d_response.json())
-        dfD_1["environment"] = "staging"
-        logger.info("Loaded staging datasets information in data frame")
+        # retrieve the datasets from production
+        lD_1 = []
+        items_count = 0
+        # filter should look something like this
+        # filter=%7B%22limits%22%3A%20%7B%22limit%22%3A%2010%2C%20%22skip%22%3A%200%2C%20%22order%22%3A%20%22asc%22%7D%7D
+        while (not lD_1 or items_count < p_datasets_count):
+            logger.info("Loading first batch of datasets from staging")
+            p_d_response = requests.get(
+                psc_datasets_url,
+                params={
+                    "filter": json.dumps({
+                        "fields": dataset_fields,
+                        "limits": {
+                            "limit": items_per_call,
+                            "skip": items_count
+                        }
+                    })
+                },
+                headers=pscClient._headers,
+                timeout=pscClient._timeout_seconds,
+                stream=False,
+            )
+            assert p_d_response.status_code == 200, "Production dataset retrieval error"
+            lD_1.append(pd.DataFrame(p_d_response.json()))
+            logger.info("Loaded {} datasets".format(len(lD_1[-1])))
+            items_count += len(lD_1[-1])
 
-        dfD_2 = pd.DataFrame(p_d_response.json())
+        dfD_2 = pd.concat(lD_1, ignore_index=True)
         dfD_2["environment"] = "production"
         logger.info("Loaded production datasets information in data frame")
+        logger.info("Total number of production datasets loaded: {}".format(len(dfD_2)))
+        del lD_1
 
         dfD_3 = pd.concat([dfD_1, dfD_2], axis=0)
         logger.info("Merge dataset information")
+        del dfD_1, dfD_2
 
-        dfD_4 = dfD_3[
-            ["pid", "sourceFolder", "size", "numberOfFiles", "type", "environment"]
-        ].rename(columns={"pid": "datasetId", "size": "datasetSize"})
+        dfD_4 = dfD_3[dataset_fields + ["environment"]]\
+            .rename(columns={"pid": "datasetId", "size": "datasetSize"})
+        dfD_4["pid"] = dfD_4["datasetId"]
         logger.info("Properly formatted datasets information ")
+        del dfD_3
 
         dfAllInfo = pd.merge(dfD_4, dfODB_6, how="outer", on=["environment", "datasetId"])
         logger.info("Merged datasets and files information")
@@ -210,6 +286,7 @@ async def read_root():
         dfAllInfo["file_full_path"] = dfAllInfo.apply(
             lambda r: os.path.join(r["sourceFolder"], r["file_path"]), axis=1
         )
+        dfAllInfo["orphaned_orig_datablock"] = dfAllInfo["pid"].isnull()
         logger.info("Saved files full path")
 
         # create data folder if there is none - modify the path later
