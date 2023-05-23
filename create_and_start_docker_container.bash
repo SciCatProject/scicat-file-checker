@@ -7,7 +7,7 @@
 
 # adjust the image tag accordingly
 sfc_image="ghcr.io/scicatproject/file-checker-service"
-sfc_image_tag="e6882cc02164279321fed2e7db0fe2b8e8a48f58"
+sfc_image_tag="1988ee6e60ff2f8b36144ccf6e68116edce8975c"
 
 
 docker container run \
@@ -28,5 +28,6 @@ docker container run \
    -e FILE_LIMIT= \
    -e HOST=localhost \
    -e PORT=8000 \
+   -p 8000:8000 \
    ${sfc_image}:${sfc_image_tag}
 

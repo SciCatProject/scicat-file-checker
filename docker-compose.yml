@@ -1,25 +1,27 @@
 version: '3'
 services:
   file_checker:
-    image: ghcr.io/junjiequan/file-checker-service
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/scicatproject/file-checker-service:e6882cc02164279321fed2e7db0fe2b8e8a48f58
+    container_name: file_checker
+    restart: always
     volumes:
-      - /usr/src/app:/home/node/app/files #location of the zipped files
+      - /usr/src/app:/home/node/app/files
       - /nfs/groups/beamlines:/nfs/groups/beamlines
       - /ess/data:/ess/data
       - /users/detector/experiments/:/users/detector/experiments
       - /mnt/groupdata:/mnt/groupdata
       - /mnt/groupdata/guide_optimizations/:/mnt/groupdata/guide_optimizations
     environment:
-      - USERNAME=<STR>
-      - PASSWORD_STAGING=<STR>
-      - PASSWORD_PROD=<STR>
-      - SSC_BASE_URL=<STR>
-      - PSC_BASE_URL=<STR>
-      - NO_PROXY=<STR>
-      - HTTP_PROXY=<STR>
-      - HTTPS_PROXY=<STR>
+      - USERNAME=ingestor
+      - PASSWORD_STAGING=aman
+      - PASSWORD_PROD=veIKtDrHHqlDEZL51bbpo2XCDYvcMmu
+      - SSC_BASE_URL=https://staging.scicat.ess.eu
+      - PSC_BASE_URL=https://scicat.ess.eu
+      - NO_PROXY=localhost,127.0.0.1,172.18.0.21,172.18.25.34
+      - HTTP_PROXY=http://172.18.12.30:8123
+      - HTTPS_PROXY=http://172.18.12.30:8123
+      - FILE_LIMIT=
+      - HOST=localhost
+      - PORT=8000
     ports:
       - '8000:8000'
