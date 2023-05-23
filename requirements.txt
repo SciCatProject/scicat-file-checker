@@ -1,6 +1,5 @@
 fastapi==0.89.1
 pandas==1.5.2
-pyscicat==0.2.5
 python-dotenv==0.21.0
 requests==2.28.1
 urllib3==1.26.14

@@ -30,21 +30,23 @@ If you want to run this application locally, you need to change or remove the vo
 
 # How to start, create and update image and containers
 
-- `sh docker-run.sh` command on terminal to start. If you make any changes, run this command again.
-  if this command gives error try change the scrip in the file to `docker-compose down` and `docker-compose up`
+- in order to start the file checker container, you can run the following command: `docker-compose up -d`
+- while to stop it, use the command: `docker-container down`
+- if you want to restart the service, you can run `docker-run.sh` script which combines both previous commands
 
 # How to use
 
-This api runs on `0.0.0.0:8000`. you can access it with `localhost:8000` as well.</br>
+This api runs on `0.0.0.0:8000`. you can access it with `localhost:8000` as well.
 
-This api contains 3 GET requests:
+This api has the following endpoints 
 
-- `http://localhost:8000/` is the root page contains nothing.
-- `http://localhost:8000/start` runs file check python script, once success it will generates csv file with analyzed results.
-- `http://localhost:8000/get_all` downloads the analyzed csv file. this request will download the csv file contains current date in the filename. e.g,`scicat_files_complete_20230119.csv`
-- `http://localhost:8000/get_false` downloads file that contains false path only
+- `GET http://localhost:8000/`: the root page contains used to check if the service is alive.
+- `GET http://localhost:8000/start`: runs the file check, and save the results locally in files. It returns some statistics
+- `GET http://localhost:8000/get_dataset_csv`: downloads the CSV file containing the information about all the datasets
+- `GET http://localhost:8000/get_datablocks_csv` downloads the CSV file containing the information about all the orig datablocks
+- `GET http://localhost:8000/get_all_files_csv` downloads the CSV file containing the information about all the files
+- `GET http://localhost:8000/get_files_to_be_checked_csv` downloads the CSV file containing the information about the files that needs to be checked
 
-For now, you can only access to the other analyzed .csv files from the repository inside the `/data` folder.
 
 # Base path setting to run the script
 
