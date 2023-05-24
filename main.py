@@ -7,25 +7,46 @@ from dotenv import load_dotenv
 # import urllib3
 # import urllib
 # import re
-import time
+#import time
 import os
 import uvicorn
 import logging
 import pyscicat.client as pyScClient
-import pyscicat.model as pyScModel
+#import pyscicat.model as pyScModel
 import pandas as pd
-from datetime import datetime
+#from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse, FileResponse, HTMLResponse
+from fastapi.logger import logger as fastapi_logger
 
 
 # Load the .env file
 load_dotenv()
 
 app = FastAPI()
+#
+# logging does not show up in docker container
+# following solution provided in the following post:
+# - https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/issues/19#issuecomment-620810957
 logger = logging.getLogger("fastapi_logger")
 logger.setLevel(logging.INFO)
 
+handler = logging.StreamHandler()
+formatter = logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+#gunicorn_error_logger = logging.getLogger("gunicorn.error")
+#gunicorn_error_logger.handlers = logger.handlers
+#gunicorn_logger = logging.getLogger("gunicorn")
+#gunicorn_logger.handlers = logger.handlers
+#uvicorn_access_logger = logging.getLogger("uvicorn.access")
+#uvicorn_access_logger.handlers = logger.handlers
+
+#fastapi_logger.handlers = logger.handlers
+#fastapi_logger.setLevel(logging.INFO)
 
 username = os.getenv("USERNAME")
 password_production = os.getenv("PASSWORD_PROD")
@@ -82,6 +103,7 @@ def checkExist(f):
 
 @app.get("/", response_class=HTMLResponse)
 def read_root():
+    logger.info("Printing usage")
     return """
     query <b>/start</b> to run the file checker script
     """
@@ -426,11 +448,17 @@ def read_root():
 # Run server
 if __name__ == "__main__":
 
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+#    handler = logging.StreamHandler()
+#    formatter = logging.Formatter(
+#        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+#    )
+#    handler.setFormatter(formatter)
+#    logger.addHandler(handler)
+#    fastapi_logger.setLevel(gunicorn_logger.level)
     logger.info("****************** Starting Server *****************")
-    uvicorn.run(app, host=os.getenv("HOST"), port= int(os.getenv("PORT")))
+    uvicorn_log_config = uvicorn.config.LOGGING_CONFIG
+    for l in ["default","access"]:
+        uvicorn_log_config["formatters"][l]["fmt"] = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    uvicorn.run(app, host=os.getenv("HOST"), port=int(os.getenv("PORT")),log_config=uvicorn_log_config)
+#else:
+#    fastapi_logger.setLevel(logging.DEBUG)
