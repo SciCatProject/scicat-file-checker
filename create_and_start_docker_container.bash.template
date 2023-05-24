@@ -1,0 +1,30 @@
+#!/bin/bash
+#
+# this script create and start the file checker docker container
+# By: Max Novelli
+#     max.novelli@ess.eu
+#
+
+# adjust the image tag accordingly
+sfc_image="ghcr.io/scicatproject/file-checker-service"
+sfc_image_tag="latest"
+
+
+docker container run \
+   -d \
+   --name scicat-file-checker \
+   -v <OS_FOLDER>:<CONTAINER_FOLDER> \
+   -e USERNAME=<SCICAT_USERNAME> \
+   -e PASSWORD_STAGING=<SCICAT_STAGING_PASSWORD> \
+   -e PASSWORD_PROD=<SCICAT_PRODUCTION_PASSWORD> \
+   -e SSC_BASE_URL=<SCICAT_STAGING_URL> \
+   -e PSC_BASE_URL=<SCICAT_PRODUCTION_URL> \
+   -e NO_PROXY=<NO_PROXY_CSL> \
+   -e HTTP_PROXY=<HTTP_PROXY_URL_AND_PORT> \
+   -e HTTPS_PROXY=<HTTPS_PROXY_URL_AND_PORT> \
+   -e FILE_LIMIT= \
+   -e HOST=0.0.0.0 \
+   -e PORT=8000 \
+   -p 8000:8000 \
+   ${sfc_image}:${sfc_image_tag}
+

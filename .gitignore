@@ -6,3 +6,6 @@ venv
 __pycache__/
 
 data/
+
+create_and_start_docker_container.bash
+
